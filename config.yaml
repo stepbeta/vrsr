@@ -1,0 +1,18 @@
+---
+# bin-path: "/tmp"
+# vrs-path: "/tmp"
+# talosctl:
+#   list-remote:
+#     devel: true
+#     limit: 10
+#     force: true
+# kubectl:
+#   list-remote:
+#     devel: true
+#     limit: 10
+#     force: true
+# kind:
+#   list-remote:
+#     devel: true
+#     limit: 10
+#     force: true

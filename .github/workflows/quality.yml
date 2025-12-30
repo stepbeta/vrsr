@@ -1,0 +1,59 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add variables to environment file
+      run: cat ".github/env" >> "$GITHUB_ENV"
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '${{ env.GOLANG_VERSION }}'
+        check-latest: true
+
+    - name: Check formatting
+      uses: Jerome1337/gofmt-action@v1.0.5
+
+    - name: Golangci-lint
+      uses: golangci/golangci-lint-action@v9.0.0
+      with:
+        version: '${{ env.GOLANGCI_LINT_VERSION }}'
+
+    - name: Verify compilation
+      run: go build ./...
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2  # Needed for PR diffs
+
+    - name: Add variables to environment file
+      run: cat ".github/env" >> "$GITHUB_ENV"
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '${{ env.GOLANG_VERSION }}'
+        check-latest: true
+
+    - name: Run unit tests
+      run: go test ./... -coverprofile=coverage.out
+
+    - name: Display coverage
+      run: go tool cover -func=coverage.out
