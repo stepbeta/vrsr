@@ -30,17 +30,30 @@ func newGithubListRemoteCommand(tool string, repoConf github.RepoConfDef) *cobra
 			return listRemoteGithub(cmd, tool, repoConf)
 		},
 	}
+	// Bind flags to Viper keys so config file / env / flags work together.
 	listRemoteCmd.Flags().BoolVar(&includeDevel, "devel", false, "Include pre-release versions (alpha, beta, rc)")
+	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.devel", tool), listRemoteCmd.Flags().Lookup("devel")); err != nil {
+		listRemoteCmd.PrintErr(err)
+		panic(err)
+	}
 	listRemoteCmd.Flags().IntVarP(&limit, "limit", "l", 0, "Limit number of versions displayed")
+	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.limit", tool), listRemoteCmd.Flags().Lookup("limit")); err != nil {
+		listRemoteCmd.PrintErr(err)
+		panic(err)
+	}
 	listRemoteCmd.Flags().BoolVarP(&forceRefresh, "force", "f", false, "Force refresh of remote versions cache")
+	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.force", tool), listRemoteCmd.Flags().Lookup("force")); err != nil {
+		listRemoteCmd.PrintErr(err)
+		panic(err)
+	}
 	return listRemoteCmd
 }
 
 // listRemoteGithub lists all remote versions of the specified tool available as GitHub releases (sorted by semver)
 func listRemoteGithub(cmd *cobra.Command, tool string, repoConf github.RepoConfDef) error {
-	includeDevel = viper.GetBool(tool + "list-remote.devel")
-	limit = viper.GetInt(tool + "list-remote.limit")
-	forceRefresh = viper.GetBool(tool + "list-remote.force")
+	includeDevel = viper.GetBool(tool + ".list-remote.devel")
+	limit = viper.GetInt(tool + ".list-remote.limit")
+	forceRefresh = viper.GetBool(tool + ".list-remote.force")
 	ghc := github.New(nil)
 	releasesData, err := ghc.FetchAllReleases(tool, github.FetchOptions{
 		IncludeDevel: includeDevel,

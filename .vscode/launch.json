@@ -11,9 +11,11 @@
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "args": [
-                "krew",
-                "install",
-                "v0.4.5"
+                "kubectl",
+                "list-remote",
+                // "--force",
+                // "--limit",
+                // "10"
             ],
             "env": {
                 "GITHUB_TOKEN": "<my-token>"

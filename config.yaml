@@ -9,9 +9,14 @@
 # kubectl:
 #   list-remote:
 #     devel: true
-#     limit: 10
+#     limit: 21
 #     force: true
 # kind:
+#   list-remote:
+#     devel: true
+#     limit: 10
+#     force: true
+# helm:
 #   list-remote:
 #     devel: true
 #     limit: 10

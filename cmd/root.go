@@ -40,12 +40,16 @@ func Execute() {
 
 func init() {
 	// global flags
+	// config file
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.vrsr/config.yaml)")
+	// bin path
 	defaultBinPath, err := utils.GetDefaultBinPath()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error determining default bin path:", err)
 		os.Exit(1)
 	}
 	rootCmd.PersistentFlags().StringP("bin-path", "b", defaultBinPath, "Absolute path to folder storing in-use tools binaries")
+	// vrs path
 	defaultVrsPath, err := utils.GetDefaultVrsPath()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error determining default vrs path:", err)
