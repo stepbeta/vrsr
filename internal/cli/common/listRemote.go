@@ -32,11 +32,20 @@ func newGithubListRemoteCommand(tool string, repoConf github.RepoConfDef) *cobra
 	}
 	// Bind flags to Viper keys so config file / env / flags work together.
 	listRemoteCmd.Flags().BoolVar(&includeDevel, "devel", false, "Include pre-release versions (alpha, beta, rc)")
-	viper.BindPFlag(fmt.Sprintf("%s.list-remote.devel", tool), listRemoteCmd.Flags().Lookup("devel"))
+	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.devel", tool), listRemoteCmd.Flags().Lookup("devel")); err != nil {
+		listRemoteCmd.PrintErr(err)
+		panic(err)
+	}
 	listRemoteCmd.Flags().IntVarP(&limit, "limit", "l", 0, "Limit number of versions displayed")
-	viper.BindPFlag(fmt.Sprintf("%s.list-remote.limit", tool), listRemoteCmd.Flags().Lookup("limit"))
+	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.limit", tool), listRemoteCmd.Flags().Lookup("limit")); err != nil {
+		listRemoteCmd.PrintErr(err)
+		panic(err)
+	}
 	listRemoteCmd.Flags().BoolVarP(&forceRefresh, "force", "f", false, "Force refresh of remote versions cache")
-	viper.BindPFlag(fmt.Sprintf("%s.list-remote.force", tool), listRemoteCmd.Flags().Lookup("force"))
+	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.force", tool), listRemoteCmd.Flags().Lookup("force")); err != nil {
+		listRemoteCmd.PrintErr(err)
+		panic(err)
+	}
 	return listRemoteCmd
 }
 
