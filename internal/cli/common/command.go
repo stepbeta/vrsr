@@ -12,11 +12,11 @@ func InitCommand(cmd *cobra.Command, tool string, repoConf github.RepoConfDef) {
 	// list-remote
 	cmd.AddCommand(newGithubListRemoteCommand(tool, repoConf))
 	// install
-	if repoConf.DownloadURL == "" {
-		cmd.AddCommand(newGithubInstallCommand(tool, repoConf))
-	} else {
-		cmd.AddCommand(newDownloadInstallCommand(tool, repoConf))
+	installType := InstallGitHubCmd
+	if repoConf.DownloadURL != "" {
+		installType = InstallDownloadCmd
 	}
+	cmd.AddCommand(newInstallCommand(tool, repoConf, installType))
 	// use
 	cmd.AddCommand(newUseCommand(tool))
 }

@@ -12,12 +12,13 @@ import (
 )
 
 var (
+	installOnUse   bool
 	errVrsNotFound = errors.New("version not found")
 )
 
 // newUseCommand creates a new 'use' command for the specified tool
 func newUseCommand(tool string) *cobra.Command {
-	return &cobra.Command{
+	useCmd := &cobra.Command{
 		Use:   "use <version>",
 		Short: fmt.Sprintf("Set the specified %s version as the active one", tool),
 		Long:  fmt.Sprintf(`Create a symlink to the specified version with the name "%s".\n\nMake sure the "bin-path" is included in the $PATH variable.`, tool),
@@ -26,6 +27,13 @@ func newUseCommand(tool string) *cobra.Command {
 			return use(cmd, args[0], tool)
 		},
 	}
+	// Bind flags to Viper keys so config file / env / flags work together.
+	useCmd.Flags().BoolVarP(&installOnUse, "install", "i", false, "Install the version if not yet present (best effort)")
+	if err := viper.BindPFlag(fmt.Sprintf("%s.use.install", tool), useCmd.Flags().Lookup("install")); err != nil {
+		useCmd.PrintErr(err)
+		panic(err)
+	}
+	return useCmd
 }
 
 // use sets the specified version of the tool as the active one
@@ -39,8 +47,25 @@ func use(cmd *cobra.Command, vrs, tool string) error {
 	vrsPath := viper.GetString("vrs-path")
 	fileName := filepath.Join(vrsPath, tool, tool+"-"+vrs)
 	if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
-		cmd.Printf("Error: specified version is not installed. Please install it first using `vrsr %s install <version>`", tool)
-		return errVrsNotFound
+		installOnUse = viper.GetBool(tool + ".use.install")
+		if !installOnUse {
+			cmd.Printf("Error: specified version is not installed. Please install it first using `vrsr %s install <version>`", tool)
+			return errVrsNotFound
+		}
+		pCmd := cmd.Parent()
+		if pCmd == nil {
+			return fmt.Errorf("internal error: use command has no parent")
+		}
+		iCmd, _, err := pCmd.Find([]string{"install"})
+		if err != nil || iCmd.Name() != "install" {
+			return fmt.Errorf("could not find sibling 'install' command")
+		}
+		if err := iCmd.RunE(iCmd, []string{vrs, "true"}); err != nil {
+			cmd.Println("Error executing install:", err)
+			cmd.Println("Skipping action")
+			return err
+		}
+		// here we should have installed the version, we assume it succeeded
 	}
 	target := filepath.Join(binPath, tool)
 	// Check if the symlink already exists
