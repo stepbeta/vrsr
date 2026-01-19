@@ -41,9 +41,9 @@ func TestInstallCommands_EarlyReturnWhenInUseOrInstalled(t *testing.T) {
 	viper.Set("vrs-path", vrsPath)
 	viper.Set("bin-path", binPath)
 
-	// calling installGithub should return early (tool already in use)
-	if err := installGithub(&cobra.Command{}, "1.2.3", "mytool", github.RepoConfDef{}); err != nil {
-		t.Fatalf("installGithub expected nil error when tool in use, got: %v", err)
+	// calling install Github should return early (tool already in use)
+	if err := install(&cobra.Command{}, "1.2.3", "mytool", github.RepoConfDef{}, InstallGitHubCmd, false); err != nil {
+		t.Fatalf("install Github expected nil error when tool in use, got: %v", err)
 	}
 
 	// remove symlink to test IsToolInstalled early return
@@ -51,8 +51,8 @@ func TestInstallCommands_EarlyReturnWhenInUseOrInstalled(t *testing.T) {
 		t.Fatalf("failed to remove symlink: %v", err)
 	}
 
-	// calling installDownload should return early (tool already installed)
-	if err := installDownload(&cobra.Command{}, "1.2.3", "mytool", github.RepoConfDef{}); err != nil {
-		t.Fatalf("installDownload expected nil error when tool installed, got: %v", err)
+	// calling install Download should return early (tool already installed)
+	if err := install(&cobra.Command{}, "1.2.3", "mytool", github.RepoConfDef{}, InstallDownloadCmd, false); err != nil {
+		t.Fatalf("install Download expected nil error when tool installed, got: %v", err)
 	}
 }

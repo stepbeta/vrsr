@@ -1,9 +1,6 @@
 package common
 
 import (
-	"reflect"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -18,43 +15,6 @@ func findSubcmd(root *cobra.Command, use string) *cobra.Command {
 		}
 	}
 	return nil
-}
-
-func TestInitCommand_SelectsDownloadInstallWhenDownloadURLSet(t *testing.T) {
-	root := &cobra.Command{Use: "root"}
-	repo := github.RepoConfDef{DownloadURL: "https://example.com/foo.zip"}
-	InitCommand(root, "foo", repo)
-
-	inst := findSubcmd(root, "install <version>")
-	if inst == nil {
-		t.Fatalf("install subcommand not found")
-	}
-
-	if inst.RunE == nil {
-		t.Fatalf("install subcommand has nil RunE")
-	}
-	name := runtime.FuncForPC(reflect.ValueOf(inst.RunE).Pointer()).Name()
-	if !strings.Contains(name, "newDownloadInstallCommand") {
-		t.Fatalf("expected install RunE to come from newDownloadInstallCommand, got %s", name)
-	}
-}
-
-func TestInitCommand_SelectsGithubInstallWhenDownloadURLEmpty(t *testing.T) {
-	root := &cobra.Command{Use: "root"}
-	repo := github.RepoConfDef{DownloadURL: ""}
-	InitCommand(root, "bar", repo)
-
-	inst := findSubcmd(root, "install <version>")
-	if inst == nil {
-		t.Fatalf("install subcommand not found")
-	}
-	if inst.RunE == nil {
-		t.Fatalf("install subcommand has nil RunE")
-	}
-	name := runtime.FuncForPC(reflect.ValueOf(inst.RunE).Pointer()).Name()
-	if !strings.Contains(name, "newGithubInstallCommand") {
-		t.Fatalf("expected install RunE to come from newGithubInstallCommand, got %s", name)
-	}
 }
 
 func TestInitCommand_RegistersCommonSubcommands(t *testing.T) {

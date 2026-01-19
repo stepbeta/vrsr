@@ -11,11 +11,10 @@
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "args": [
-                "kubectl",
-                "list-remote",
-                // "--force",
-                // "--limit",
-                // "10"
+                "talosctl",
+                "use",
+                "v1.11.4",
+                "-i"
             ],
             "env": {
                 "GITHUB_TOKEN": "<my-token>"
