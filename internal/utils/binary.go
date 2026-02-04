@@ -49,7 +49,7 @@ func DownloadBinary(dlURL, tool, version, vrsPath string, zipped bool) error {
 	if zipped {
 		// Construct the expected path inside the tar: "linux-amd64/toolname"
 		internalArchivePath := fmt.Sprintf("%s-%s/%s", osAlias, archAlias, tool)
-		return extractSpecificFile(resp.Body, internalArchivePath, destPath, resp.ContentLength)
+		return ExtractSpecificFile(resp.Body, internalArchivePath, destPath, resp.ContentLength)
 	}
 
 	// Direct binary logic (your original code)
@@ -79,8 +79,8 @@ func DownloadBinary(dlURL, tool, version, vrsPath string, zipped bool) error {
 	return os.Chmod(destPath, 0755)
 }
 
-// extractSpecificFile extracts a specific file from a gzip-compressed tar archive.
-func extractSpecificFile(gzipStream io.Reader, internalPath, destPath string, size int64) error {
+// ExtractSpecificFile extracts a specific file from a gzip-compressed tar archive.
+func ExtractSpecificFile(gzipStream io.Reader, internalPath, destPath string, size int64) error {
 	// 1. Setup progress bar for the download stream
 	bar := progressbar.DefaultBytes(size, "Downloading & Extracting...")
 

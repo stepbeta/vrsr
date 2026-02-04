@@ -62,6 +62,8 @@ func init() {
 	rootCmd.AddCommand(tools.NewTalosctlCommand())
 	rootCmd.AddCommand(tools.NewKubectlCommand())
 	rootCmd.AddCommand(tools.NewHelmCommand())
+	rootCmd.AddCommand(tools.NewCiliumCommand())
+	rootCmd.AddCommand(tools.NewHubbleCommand())
 }
 
 // initializeConfig sets up Viper to read in config files and environment variables

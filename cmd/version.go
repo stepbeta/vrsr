@@ -10,7 +10,7 @@ var versionCmd = &cobra.Command{
 	Short: "vrsr tool version",
 	Long:  `Shows the current version of the vrsr tool.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Printf("vrsr version v%s\n", Version)
+		cmd.Printf("vrsr version %s\n", Version)
 	},
 }
 
