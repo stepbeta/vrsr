@@ -11,14 +11,13 @@
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
             "args": [
-                "talosctl",
-                "use",
-                "v1.11.4",
-                "-i"
+                "cilium",
+                "install",
+                "v0.19.0",
+                "-u"
             ],
             "env": {
                 "GITHUB_TOKEN": "<my-token>"
-            //     "VRSR_BIN_PATH": "/opt/vrsr"
             }
         },
     ]

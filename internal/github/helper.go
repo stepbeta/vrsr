@@ -163,11 +163,16 @@ func (gh *GithubHelper) DownloadRelease(tool, version, vrsPath string, repo Repo
 			// windows binary must have .exe suffix
 			continue
 		}
-		if osAlias != "windows" && len(strings.Split(lname, ".")) > 1 {
+		if osAlias != "windows" && !repo.Zipped && len(strings.Split(lname, ".")) > 1 {
 			// non-windows binaries should not have an extension
 			continue
 		}
+		if osAlias != "windows" && repo.Zipped && !strings.HasSuffix(lname, ".tar.gz") {
+			// non-windows zipped binaries must have .tar.gz suffix
+			continue
+		}
 		asset = a
+		break
 	}
 	if asset == nil {
 		return errReleaseNotFound
@@ -183,12 +188,23 @@ func (gh *GithubHelper) DownloadRelease(tool, version, vrsPath string, repo Repo
 		_ = rc.Close()
 	}()
 
-	// write to temp file then move (safer)
+	// write to temp file then move (safer) or extract if zipped
 	finalPath := filepath.Join(vrsPath, tool)
 	err = utils.EnsurePathExists(finalPath)
 	if err != nil {
 		return fmt.Errorf("error ensuring vrs path exists: %w", err)
 	}
+
+	// If the repo provides a zipped archive, extract the specific binary
+	if repo.Zipped {
+		destPath := filepath.Join(finalPath, tool+"-"+version)
+		if err := utils.ExtractSpecificFile(rc, tool, destPath, -1); err != nil {
+			return fmt.Errorf("failed to extract file from archive: %w", err)
+		}
+		return nil
+	}
+
+	// Non-zipped: save binary to temp file then move into place
 	tmpFile, err := os.CreateTemp(finalPath, tool+"-download-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temp file: %w", err)
