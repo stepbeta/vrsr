@@ -21,8 +21,9 @@ var (
 // newGithubListRemoteCommand creates a new 'list-remote' command for the specified tool
 func newGithubListRemoteCommand(tool string, repoConf github.RepoConfDef) *cobra.Command {
 	listRemoteCmd := &cobra.Command{
-		Use:   "list-remote",
-		Short: fmt.Sprintf("List all remote %s versions from GitHub (sorted by semver)", tool),
+		Use:     "list-remote",
+		Aliases: []string{"ls-remote"},
+		Short:   fmt.Sprintf("List all remote %s versions from GitHub (sorted by semver)", tool),
 		Long: fmt.Sprintf("Lists all the remote %s versions available as GitHub releases (sorted by semver).\n\n"+
 			"In the list the versions currently installed are marked with a '+' symbol, while the version currently in use is marked with a '*' symbol.\n\n"+
 			"Note: By default pre-release versions (alpha, beta, rc) are hidden. Use '--devel' to include them", tool),

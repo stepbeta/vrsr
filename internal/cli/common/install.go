@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,6 +44,16 @@ func newInstallCommand(tool string, repoConf github.RepoConfDef, installType Ins
 
 // install downloads and installs the specified version of the tool from GitHub releases
 func install(cmd *cobra.Command, vrs, tool string, repoConf github.RepoConfDef, installType InstallCmdType, skipMsg bool) error {
+	if strings.ToLower(vrs) == "latest" {
+		ghc := github.New(nil)
+		latestVrs, err := getLatestVersion(tool, repoConf, ghc)
+		if err != nil {
+			return fmt.Errorf("failed to get latest version: %w", err)
+		}
+		vrs = latestVrs
+		cmd.Printf("Resolved 'latest' to version %s\n", vrs)
+	}
+
 	if utils.IsToolInUse(tool, vrs) {
 		cmd.Printf("%s version %s is already installed and in use. Nothing to do\n", tool, vrs)
 		return nil
@@ -110,4 +121,22 @@ func useOnInstallFn(cmd *cobra.Command, vrs, tool string) error {
 		return nil
 	}
 	return nil
+}
+
+func getLatestVersion(tool string, repoConf github.RepoConfDef, ghc github.GithubHelper) (string, error) {
+	releasesData, err := ghc.FetchAllReleases(tool, github.FetchOptions{
+		IncludeDevel: false,
+		Limit:        0,
+		Force:        true,
+		RepoConf:     repoConf,
+	})
+	if err != nil {
+		return "", err
+	}
+	versions := utils.SemverFromReleases(releasesData.Releases, false)
+	if len(versions) == 0 {
+		return "", fmt.Errorf("no versions found for %s", tool)
+	}
+	latest := versions[len(versions)-1]
+	return latest.Original(), nil
 }
