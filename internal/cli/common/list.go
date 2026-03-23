@@ -11,9 +11,10 @@ import (
 // newGithubListCommand creates a new 'list' command for the specified tool
 func newListCommand(tool string) *cobra.Command {
 	return &cobra.Command{
-		Use:   "list",
-		Short: fmt.Sprintf("List all installed %s versions", tool),
-		Long:  fmt.Sprintf(`Lists all the %s versions that are currently installed on the system.`, tool),
+		Use:     "list",
+		Aliases: []string{"ls"},
+		Short:   fmt.Sprintf("List all installed %s versions", tool),
+		Long:    fmt.Sprintf(`Lists all the %s versions that are currently installed on the system.`, tool),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return list(cmd, tool)
 		},
