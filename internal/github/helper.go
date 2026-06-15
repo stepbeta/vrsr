@@ -1,7 +1,11 @@
 package github
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -234,5 +238,152 @@ func (gh *GithubHelper) DownloadRelease(tool, version, vrsPath string, repo Repo
 	if err := os.Chmod(destPath, 0755); err != nil {
 		return fmt.Errorf("failed to set executable permission: %w", err)
 	}
+
+	// verify checksum if available
+	if err := verifyDownloadChecksum(gh, ctx, rel, asset.GetName(), destPath); err != nil {
+		_ = os.Remove(destPath)
+		return fmt.Errorf("checksum verification failed: %w", err)
+	}
+	return nil
+}
+
+// isChecksumAsset returns true if the asset name looks like a checksum file.
+func isChecksumAsset(name string) bool {
+	ln := strings.ToLower(name)
+	return strings.HasSuffix(ln, ".sha256") ||
+		strings.HasSuffix(ln, ".sha256sum") ||
+		strings.HasSuffix(ln, ".sha256.sig") ||
+		strings.Contains(ln, "checksums") ||
+		ln == "sha256sums" ||
+		ln == "sha256sums.txt" ||
+		ln == "sha256sum.txt"
+}
+
+// parseChecksums parses a checksum file in standard sha256sum format.
+// Each line is: "<hex-hash>  <filename>" or "<hex-hash> *<filename>".
+// Returns a map of filename → hash.
+func parseChecksums(r io.Reader) (map[string]string, error) {
+	scanner := bufio.NewScanner(r)
+	checksums := make(map[string]string)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		fields := strings.Fields(line)
+		var hash, name string
+		if len(fields) >= 2 {
+			hash = fields[0]
+			name = strings.TrimLeft(fields[1], "*")
+		} else if len(fields) == 1 {
+			hash = fields[0]
+		}
+		if len(hash) != 64 || name == "" {
+			continue
+		}
+		checksums[name] = hash
+	}
+	return checksums, scanner.Err()
+}
+
+// verifyDownloadChecksum searches release assets for a checksum file, downloads
+// it, and verifies the downloaded binary against the matching hash.
+// Returns nil if no checksum file is found (best-effort).
+func verifyDownloadChecksum(gh *GithubHelper, ctx context.Context, rel *github.RepositoryRelease, assetName, destPath string) error {
+	// Find a checksum asset
+	var checksumAsset *github.ReleaseAsset
+	for _, a := range rel.Assets {
+		if a == nil {
+			continue
+		}
+		if isChecksumAsset(a.GetName()) || a.GetName() == assetName+".sha256" {
+			checksumAsset = a
+			break
+		}
+	}
+
+	// If the explicit .sha256 asset exists but wasn't caught above, try matching
+	if checksumAsset == nil {
+		for _, a := range rel.Assets {
+			if a == nil {
+				continue
+			}
+			if a.GetName() == assetName+".sha256" {
+				checksumAsset = a
+				break
+			}
+		}
+	}
+
+	if checksumAsset == nil {
+		fmt.Fprintf(os.Stderr, "warning: no checksum file found for %s, skipping verification\n", assetName)
+		return nil
+	}
+
+	// We don't have the repo owner/name here, derive from any known context.
+	// For now use the asset download URL directly.
+	u := checksumAsset.GetBrowserDownloadURL()
+	if u == "" {
+		fmt.Fprintf(os.Stderr, "warning: checksum file %s has no download URL\n", checksumAsset.GetName())
+		return nil
+	}
+	resp, err := http.Get(u)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: failed to download checksum file %s: %v\n", checksumAsset.GetName(), err)
+		return nil
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		fmt.Fprintf(os.Stderr, "warning: bad status downloading checksum file %s: %s\n", checksumAsset.GetName(), resp.Status)
+		return nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: failed to read checksum file: %v\n", err)
+		return nil
+	}
+
+	// Try parsing as standard sha256sum format first
+	checksums, parseErr := parseChecksums(bytes.NewReader(body))
+	if parseErr == nil && len(checksums) > 0 {
+		hash, ok := checksums[assetName]
+		if !ok {
+			// Try without the archive extension
+			hash, ok = checksums[strings.TrimSuffix(assetName, ".tar.gz")]
+		}
+		if ok {
+			return verifyFileSHA256(destPath, hash)
+		}
+	}
+
+	// Fallback: treat the entire file as just the hex hash
+	hash := strings.TrimSpace(string(body))
+	hash = strings.Fields(hash)[0]
+	if len(hash) == 64 {
+		return verifyFileSHA256(destPath, hash)
+	}
+
+	fmt.Fprintf(os.Stderr, "warning: could not find hash for %s in checksum file %s\n", assetName, checksumAsset.GetName())
+	return nil
+}
+
+// verifyFileSHA256 computes the SHA256 of the file at path and compares it to expectedHex.
+func verifyFileSHA256(path, expectedHex string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("failed to open file for checksum verification: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return fmt.Errorf("failed to compute SHA256: %w", err)
+	}
+	got := hex.EncodeToString(h.Sum(nil))
+	if !strings.EqualFold(got, expectedHex) {
+		return fmt.Errorf("SHA256 mismatch for %s: expected %s, got %s", path, expectedHex, got)
+	}
+	fmt.Fprintf(os.Stderr, "info: checksum verification passed for %s\n", path)
 	return nil
 }
