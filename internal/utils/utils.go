@@ -44,7 +44,7 @@ func GetDefaultVrsPath() (string, error) {
 
 // EnsurePathExists ensures that the given path exists, creating it if necessary.
 func EnsurePathExists(path string) error {
-	return os.MkdirAll(path, os.ModePerm)
+	return os.MkdirAll(path, 0755)
 }
 
 // ListInstalledVersions lists all installed tool versions in the given vrsPath.
