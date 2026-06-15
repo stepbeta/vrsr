@@ -44,7 +44,7 @@ func GetDefaultVrsPath() (string, error) {
 
 // EnsurePathExists ensures that the given path exists, creating it if necessary.
 func EnsurePathExists(path string) error {
-	return os.MkdirAll(path, os.ModePerm)
+	return os.MkdirAll(path, 0755)
 }
 
 // ListInstalledVersions lists all installed tool versions in the given vrsPath.
@@ -65,12 +65,12 @@ func ListInstalledVersions(vrsPath, tool string) ([]*semver.Version, error) {
 			continue
 		}
 		// by convention the file name is tool-VERSION
-		fv := strings.Split(fileName, "-")
-		if fv == nil || len(fv) != 2 {
-			// skip unexpected file names
+		versionStr := strings.TrimPrefix(fileName, tool+"-")
+		if versionStr == fileName {
+			// prefix didn't match, skip
 			continue
 		}
-		v, err := semver.NewVersion(fv[1])
+		v, err := semver.NewVersion(versionStr)
 		if err == nil {
 			versions = append(versions, v)
 		}
@@ -90,9 +90,9 @@ func GetVrsInUse(binPath, tool string) (string, error) {
 		return "", err
 	}
 	baseName := filepath.Base(linkPath)
-	parts := strings.Split(baseName, "-")
-	if len(parts) == 2 {
-		return parts[1], nil
+	versionStr := strings.TrimPrefix(baseName, tool+"-")
+	if versionStr != baseName {
+		return versionStr, nil
 	}
 	return "", nil
 }

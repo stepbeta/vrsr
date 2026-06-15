@@ -31,7 +31,7 @@ func newUseCommand(tool string) *cobra.Command {
 	useCmd.Flags().BoolVarP(&installOnUse, "install", "i", false, "Install the version if not yet present (best effort)")
 	if err := viper.BindPFlag(fmt.Sprintf("%s.use.install", tool), useCmd.Flags().Lookup("install")); err != nil {
 		useCmd.PrintErr(err)
-		panic(err)
+		cobra.CheckErr(err)
 	}
 	return useCmd
 }
@@ -65,7 +65,10 @@ func use(cmd *cobra.Command, vrs, tool string) error {
 			cmd.Println("Skipping action")
 			return err
 		}
-		// here we should have installed the version, we assume it succeeded
+		// Re-verify the file was actually created by the install
+		if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("install completed but version file not found: %s", fileName)
+		}
 	}
 	target := filepath.Join(binPath, tool)
 	// Check if the symlink already exists
