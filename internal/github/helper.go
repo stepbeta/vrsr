@@ -74,8 +74,7 @@ func (gh *GithubHelper) FetchAllReleases(tool string, opts FetchOptions) (utils.
 		}
 	}
 
-	totPages := 1
-	bar := progressbar.NewOptions(totPages,
+	bar := progressbar.NewOptions(-1,
 		progressbar.OptionSetWidth(30),
 		progressbar.OptionSetDescription("Downloading releases metadata..."),
 		progressbar.OptionClearOnFinish(),
@@ -102,7 +101,7 @@ pages:
 		if err != nil {
 			return utils.ReleasesData{}, err
 		}
-		if resp.LastPage > 1 && totPages != resp.LastPage {
+		if resp.LastPage > 1 {
 			bar.ChangeMax(resp.LastPage)
 		}
 
