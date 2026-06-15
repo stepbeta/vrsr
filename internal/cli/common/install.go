@@ -44,8 +44,8 @@ func newInstallCommand(tool string, repoConf github.RepoConfDef, installType Ins
 
 // install downloads and installs the specified version of the tool from GitHub releases
 func install(cmd *cobra.Command, vrs, tool string, repoConf github.RepoConfDef, installType InstallCmdType, skipMsg bool) error {
+	ghc := github.New(nil)
 	if strings.ToLower(vrs) == "latest" {
-		ghc := github.New(nil)
 		latestVrs, err := getLatestVersion(tool, repoConf, ghc)
 		if err != nil {
 			return fmt.Errorf("failed to get latest version: %w", err)
@@ -76,7 +76,6 @@ func install(cmd *cobra.Command, vrs, tool string, repoConf github.RepoConfDef, 
 	// depending on the install type we use the appropriate install method
 	switch installType {
 	case InstallGitHubCmd:
-		ghc := github.New(nil)
 		if err := ghc.DownloadRelease(tool, vrs, vrsPath, repoConf); err != nil {
 			return err
 		}
