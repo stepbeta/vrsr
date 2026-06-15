@@ -37,7 +37,7 @@ func newInstallCommand(tool string, repoConf github.RepoConfDef, installType Ins
 	installCmd.Flags().BoolVarP(&useOnInstall, "use", "u", false, "Immediately use the version once installed (best effort)")
 	if err := viper.BindPFlag(fmt.Sprintf("%s.install.use", tool), installCmd.Flags().Lookup("use")); err != nil {
 		installCmd.PrintErr(err)
-		panic(err)
+		cobra.CheckErr(err)
 	}
 	return installCmd
 }

@@ -35,17 +35,17 @@ func newGithubListRemoteCommand(tool string, repoConf github.RepoConfDef) *cobra
 	listRemoteCmd.Flags().BoolVar(&includeDevel, "devel", false, "Include pre-release versions (alpha, beta, rc)")
 	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.devel", tool), listRemoteCmd.Flags().Lookup("devel")); err != nil {
 		listRemoteCmd.PrintErr(err)
-		panic(err)
+		cobra.CheckErr(err)
 	}
 	listRemoteCmd.Flags().IntVarP(&limit, "limit", "l", 0, "Limit number of versions displayed")
 	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.limit", tool), listRemoteCmd.Flags().Lookup("limit")); err != nil {
 		listRemoteCmd.PrintErr(err)
-		panic(err)
+		cobra.CheckErr(err)
 	}
 	listRemoteCmd.Flags().BoolVarP(&forceRefresh, "force", "f", false, "Force refresh of remote versions cache")
 	if err := viper.BindPFlag(fmt.Sprintf("%s.list-remote.force", tool), listRemoteCmd.Flags().Lookup("force")); err != nil {
 		listRemoteCmd.PrintErr(err)
-		panic(err)
+		cobra.CheckErr(err)
 	}
 	return listRemoteCmd
 }

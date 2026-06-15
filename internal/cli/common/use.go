@@ -31,7 +31,7 @@ func newUseCommand(tool string) *cobra.Command {
 	useCmd.Flags().BoolVarP(&installOnUse, "install", "i", false, "Install the version if not yet present (best effort)")
 	if err := viper.BindPFlag(fmt.Sprintf("%s.use.install", tool), useCmd.Flags().Lookup("install")); err != nil {
 		useCmd.PrintErr(err)
-		panic(err)
+		cobra.CheckErr(err)
 	}
 	return useCmd
 }
