@@ -111,7 +111,7 @@ func DownloadBinary(dlURL, tool, version, vrsPath string, zipped bool) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("warning: failed to close response body: %v\n", err)
+			fmt.Fprintf(os.Stderr, "warning: failed to close response body: %v\n", err)
 		}
 	}()
 
