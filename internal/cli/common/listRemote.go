@@ -12,8 +12,6 @@ import (
 	"github.com/stepbeta/vrsr/internal/utils"
 )
 
-
-
 // newGithubListRemoteCommand creates a new 'list-remote' command for the specified tool
 func newGithubListRemoteCommand(tool string, repoConf github.RepoConfDef) *cobra.Command {
 	listRemoteCmd := &cobra.Command{
