@@ -65,7 +65,10 @@ func use(cmd *cobra.Command, vrs, tool string) error {
 			cmd.Println("Skipping action")
 			return err
 		}
-		// here we should have installed the version, we assume it succeeded
+		// Re-verify the file was actually created by the install
+		if _, err := os.Stat(fileName); errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("install completed but version file not found: %s", fileName)
+		}
 	}
 	target := filepath.Join(binPath, tool)
 	// Check if the symlink already exists
