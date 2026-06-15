@@ -107,7 +107,13 @@ func ExtractSpecificFile(gzipStream io.Reader, internalPath, destPath string, si
 			return fmt.Errorf("error reading tar: %w", err)
 		}
 
-		// 4. Check if the current entry matches our dynamic path
+		// 4. Reject entries attempting directory traversal
+		if strings.Contains(header.Name, "..") || filepath.IsAbs(header.Name) {
+			fmt.Printf("warning: skipping unsafe archive entry: %s\n", header.Name)
+			continue
+		}
+
+		// 5. Check if the current entry matches our dynamic path
 		// We use filepath.ToSlash to ensure cross-platform path consistency
 		if header.Name == internalPath || filepath.Clean(header.Name) == internalPath {
 			outFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
